@@ -9,9 +9,12 @@ import com.ruoyi.project.biz.pojo.ImageMessageReader;
 import com.ruoyi.project.biz.pojo.TextMessage;
 import com.ruoyi.project.biz.pojo.WeChatMessage;
 import com.ruoyi.project.biz.service.TNoticeMsgService;
+import com.ruoyi.project.biz.service.WeChatOfficialService;
+import com.ruoyi.project.biz.service.impl.MediaServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -26,6 +29,10 @@ import java.util.List;
 public class WxTestController {
     @Autowired
     private TNoticeMsgService tNoticeMsgService;
+    @Autowired
+    private WeChatOfficialService weChatOfficialService;
+    @Autowired
+    private MediaServiceImpl mediaService;
 
     private final String TOKEN = "isliaoqstoken"; // 请按照公众平台官网\基本配置中信息填写
 
@@ -141,8 +148,17 @@ public class WxTestController {
                 .toString();
     }
 
+    @PostMapping("/upload")
+    public String uploadMedia(@RequestParam("file") MultipartFile file,
+                              @RequestParam("mediaType") String mediaType) throws IOException {
+        String accessToken = weChatOfficialService.getAccessToken();
+        return mediaService.upload(accessToken, file, mediaType);
+    }
 
-
-
-
+    @PostMapping("/getMedia")
+    public String getMedia(@RequestParam("accessToken") String accessToken,
+                           @RequestParam("mediaId") String mediaId) throws IOException {
+        mediaService.getMedia(accessToken, mediaId);
+        return "Media retrieval initiated!";
+    }
 }

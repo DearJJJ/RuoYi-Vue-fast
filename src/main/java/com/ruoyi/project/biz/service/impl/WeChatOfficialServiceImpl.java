@@ -1,36 +1,52 @@
 package com.ruoyi.project.biz.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.framework.redis.RedisCache;
 import com.ruoyi.project.biz.service.WeChatOfficialService;
-import org.springframework.scheduling.annotation.Scheduled;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 public class WeChatOfficialServiceImpl implements WeChatOfficialService {
-    private String accessToken = "";
+    @Autowired
+    private RedisCache redisCache;
 
-    private void realGetAccessToken() {
-        String appId = "xxxxx";
-        String appSecret = "xxxxx";
+    private String realGetAccessToken() {
+        String appId = "wx4814875b447f3d78";
+        String appSecret = "42ec5c988adf9fe0bdce1355f938e5f4";
         String url = String.format("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s",
                 appId, appSecret);
 
-        RestTemplate restTemplate = new RestTemplate();
-        JsonNode response = restTemplate.getForObject(url, JsonNode.class);
+        // 使用Hutool的HttpUtil进行GET请求
+        String response = HttpUtil.get(url);
 
-        if (response != null) {
-            this.accessToken = response.get("access_token").asText();
+        if (JSONUtil.isJson(response)) {
+            JSONObject jsonResponse = JSONUtil.parseObj(response);
+            String accessToken1 = jsonResponse.getStr("access_token");
+            log.info("token is ---> {}", accessToken1);
+            return accessToken1;
+            // 打印日志
+        } else {
+            log.error("Invalid response received: {}", response);
+            return null;
         }
     }
 
     @Override
     public String getAccessToken() {
-        return this.accessToken;
-    }
-
-    @Scheduled(fixedRate = 7140000)
-    public void run() {
-        realGetAccessToken();
+        String cacheObject = redisCache.getCacheObject("Wx:Access_Token");
+        if (StringUtils.isBlank(cacheObject)) {
+            String accessToken = realGetAccessToken();
+            redisCache.setCacheObject("Wx:Access_Token", accessToken, 2, TimeUnit.HOURS);
+            cacheObject = accessToken;
+        }
+        return cacheObject;
     }
 }
