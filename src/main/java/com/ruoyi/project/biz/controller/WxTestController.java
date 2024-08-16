@@ -161,4 +161,12 @@ public class WxTestController {
         mediaService.getMedia(accessToken, mediaId);
         return "Media retrieval initiated!";
     }
+
+    @GetMapping("/batchGet")
+    public String batchGetMaterial(@RequestParam("accessToken") String accessToken,
+                                   @RequestParam("mediaType") String mediaType,
+                                   @RequestParam(value = "offset", defaultValue = "0") int offset,
+                                   @RequestParam(value = "count", defaultValue = "20") int count) {
+        return mediaService.batchGet(accessToken, mediaType, offset, count);
+    }
 }

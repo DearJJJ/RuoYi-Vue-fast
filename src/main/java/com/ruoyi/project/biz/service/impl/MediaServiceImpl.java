@@ -1,9 +1,13 @@
 package com.ruoyi.project.biz.service.impl;
 
+import cn.hutool.http.ContentType;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -59,4 +63,20 @@ public class MediaServiceImpl {
             }
         }
     }
+    // 批量获取素材列表
+    public String batchGet(String accessToken, String mediaType, int offset, int count) {
+        String postUrl = String.format("https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token=%s", accessToken);
+
+        // 构建请求体
+        String requestBody = String.format("{ \"type\": \"%s\", \"offset\": %d, \"count\": %d }", mediaType, offset, count);
+
+        // 使用 Hutool 的 HttpRequest 发送 POST 请求
+        HttpResponse response = HttpRequest.post(postUrl)
+                .body(requestBody, "json") // 设置请求体为 JSON
+                .execute();  // 执行请求并获取响应
+
+        // 返回响应体内容
+        return response.body();
+    }
+
 }
